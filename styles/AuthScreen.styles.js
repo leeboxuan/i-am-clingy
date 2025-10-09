@@ -65,11 +65,17 @@ authCard: {
 
   button: {
     backgroundColor: "#b89b84",
-    paddingVertical: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.lg,
-    alignItems: "center",
-    marginTop: Theme.spacing.sm,
-    ...Theme.shadows.sm,
+   paddingVertical: 14,
+  paddingHorizontal: 40,
+  borderRadius: 24,
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: "#c89f9c",
+  shadowOpacity: 0.25,
+  shadowRadius: 8,
+  elevation: 3,
+  width: "70%",
+  alignSelf: "center",
   },
 
   buttonText: {

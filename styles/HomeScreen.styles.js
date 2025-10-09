@@ -1,171 +1,173 @@
-import { StyleSheet } from 'react-native';
-import { GlobalStyles } from './Global.styles';
-import { Theme } from './Theme';
+import { StyleSheet } from "react-native";
+import { Theme } from "./Theme";
 
 export const HomeScreenStyles = StyleSheet.create({
   container: {
-    ...GlobalStyles.container,
-    backgroundColor: Theme.colors.background,
+    flex: 1,
+    backgroundColor: "#1E1A17", // deep clay black
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.xl,
   },
+
+  // HEADER
   header: {
-    ...GlobalStyles.header,
-    backgroundColor: Theme.colors.background,
-    borderBottomColor: Theme.colors.accent,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Theme.spacing.lg,
+        marginTop: Theme.spacing.xxl,
+
   },
-  headerTitle: {
-    ...GlobalStyles.headerTitle,
-    color: Theme.colors.text.primary,
+  greeting: {
+    fontFamily: "PoppinsBold",
+    fontSize: 22,
+    color: "#F3EEE8",
+    letterSpacing: 0.3,
   },
-  friendsButton: {
-    padding: Theme.spacing.sm,
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.round,
-    ...Theme.shadows.sm,
+  greetingHighlight: {
+    fontFamily: "Poppins",
+    color: "#C9BFB2",
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  iconButton: {
+    fontSize: 22,
+    color: "#C9BFB2",
   },
 
-  // Quick Actions
-  quickActions: {
-    flexDirection: 'row',
-    padding: Theme.spacing.md,
-    gap: Theme.spacing.sm,
+  // GROUPS SECTION
+  sectionTitle: {
+    fontFamily: "PoppinsBold",
+    fontSize: 17,
+    color: "#F3EEE8",
+    marginBottom: Theme.spacing.sm,
   },
-  mainAction: {
-    flex: 2,
-    padding: Theme.spacing.md,
-    backgroundColor: Theme.colors.primary,
+  groupCard: {
+    backgroundColor: "#2A2521",
     borderRadius: Theme.borderRadius.lg,
-    alignItems: 'center',
-    ...Theme.shadows.md,
-  },
-  mainActionText: {
-    ...GlobalStyles.buttonText,
-    color: Theme.colors.text.inverse,
-  },
-  clingyAction: {
-    flex: 1,
     padding: Theme.spacing.md,
-    backgroundColor: Theme.colors.secondary,
-    borderRadius: Theme.borderRadius.lg,
-    alignItems: 'center',
-    ...Theme.shadows.sm,
+    marginRight: Theme.spacing.md,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  clingyActionText: {
-    ...GlobalStyles.buttonText,
-    fontSize: Theme.typography.caption.fontSize,
-    color: Theme.colors.text.inverse,
+  groupName: {
+    fontFamily: "Poppins",
+    fontSize: 15,
+    color: "#F3EEE8",
+    marginBottom: Theme.spacing.xs,
   },
+  memberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  memberAvatar: {
+    width: 35,
+    height: 35,
+    borderRadius: 14,
+    opacity: 0.85,
+  },
+  memberCount: {
+    fontFamily: "Nunito",
+    fontSize: 12,
+    color: "#9C9185",
+    marginLeft: 6,
+  },
+  screen: {
+  flex: 1,
+  backgroundColor: "#1E1A17", // fallback for dark mode
+},
 
-  // Quick Messages
-  quickMessagesSection: {
-    ...GlobalStyles.section,
-    paddingHorizontal: Theme.spacing.md,
+backgroundAnimation: {
+  ...StyleSheet.absoluteFillObject,
+  zIndex: 2,
+  opacity: 0.1, // subtle motion
+},
+
+  // EMPTY GROUP STATE
+  emptyGroupContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Theme.spacing.xl,
   },
-  quickMessageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Theme.spacing.sm,
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.round,
-    marginRight: Theme.spacing.sm,
-    ...Theme.shadows.sm,
+  emptyGroupImage: {
+    width: 160,
+    height: 160,
+    opacity: 0.85,
   },
-  quickMessageEmoji: {
+  emptyGroupTitle: {
+    fontFamily: "PoppinsBold",
     fontSize: 16,
-    marginRight: Theme.spacing.xs,
+    color: "#F3EEE8",
+    marginTop: Theme.spacing.md,
   },
-  quickMessageText: {
-    ...Theme.typography.small,
-    color: Theme.colors.text.primary,
-    fontWeight: '500',
+  emptyGroupSubtitle: {
+    fontFamily: "Nunito",
+    fontSize: 14,
+    color: "#C9BFB2",
+    marginTop: 4,
+  },
+  createGroupButton: {
+    backgroundColor: "#A4896E",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: Theme.borderRadius.lg,
+    marginTop: Theme.spacing.md,
+  },
+  createGroupText: {
+    fontFamily: "PoppinsBold",
+    color: "#1E1A17",
   },
 
-  // Friends Section
-  friendsSection: {
-    ...GlobalStyles.section,
-    paddingHorizontal: Theme.spacing.md,
-  },
-  friendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  // FEED / MOMENTS
+  updateCard: {
+    backgroundColor: "#2A2521",
+    borderRadius: Theme.borderRadius.lg,
     padding: Theme.spacing.md,
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.lg,
-    marginRight: Theme.spacing.sm,
-    ...Theme.shadows.sm,
-  },
-  friendInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: Theme.borderRadius.round,
-    marginRight: Theme.spacing.sm,
-  },
-  friendName: {
-    ...Theme.typography.body,
-    fontWeight: '600',
-    color: Theme.colors.text.primary,
-  },
-  lastSeen: {
-    ...Theme.typography.small,
-    color: Theme.colors.text.secondary,
-  },
-
-  // Updates Section
-  updatesSection: {
-    flex: 1,
-    paddingHorizontal: Theme.spacing.md,
-  },
-  updateItem: {
-    ...GlobalStyles.card,
-    backgroundColor: Theme.colors.surface,
-    borderRadius: Theme.borderRadius.lg,
-    marginBottom: Theme.spacing.sm,
-  },
-  updateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Theme.spacing.sm,
+    marginBottom: Theme.spacing.md,
+    borderWidth: 0.5,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   userName: {
-    ...Theme.typography.body,
-    fontWeight: 'bold',
-    color: Theme.colors.text.primary,
-  },
-  timestamp: {
-    ...Theme.typography.small,
-    color: Theme.colors.text.secondary,
-  },
-  updateImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: Theme.borderRadius.md,
-    marginBottom: Theme.spacing.sm,
+    fontFamily: "PoppinsBold",
+    fontSize: 14,
+    color: "#F3EEE8",
   },
   updateText: {
-    ...Theme.typography.body,
-    color: Theme.colors.text.primary,
-    marginBottom: Theme.spacing.sm,
-  },
-  updateActions: {
-    flexDirection: 'row',
-    gap: Theme.spacing.md,
-  },
-  actionButton: {
-    padding: Theme.spacing.xs,
+    fontFamily: "Nunito",
+    fontSize: 15,
+    color: "#C9BFB2",
+    marginTop: 2,
   },
 
-  emptyState: {
-    ...GlobalStyles.emptyState,
+  emptyMoments: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Theme.spacing.xl,
   },
-  emptyStateText: {
-    ...GlobalStyles.emptyStateText,
+  emptyMomentsTitle: {
+    fontFamily: "PoppinsBold",
+    fontSize: 15,
+    color: "#C9BFB2",
   },
-  emptyStateSubtext: {
-    ...GlobalStyles.emptyStateSubtext,
+  emptyMomentsSubtitle: {
+    fontFamily: "Nunito",
+    fontSize: 13,
+    color: "#9C9185",
+    marginTop: 2,
+  },
+
+  // LOADING
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#1E1A17",
+  },
+  loadingText: {
+    marginTop: Theme.spacing.md,
+    color: "#9C9185",
+    fontFamily: "Nunito",
   },
 });

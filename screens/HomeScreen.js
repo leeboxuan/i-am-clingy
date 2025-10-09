@@ -1,270 +1,175 @@
 // screens/HomeScreen.js
-import * as Notifications from 'expo-notifications';
-import { addDoc, collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    RefreshControl,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { auth, db } from '../config/firebase';
-import { startLocationTracking } from '../services/LocationService';
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import LottieView from "lottie-react-native";
+import React, { useEffect, useState } from "react";
 
-// Import styles
-import { HomeScreenStyles as styles } from '../styles/HomeScreen.styles';
-import { Theme } from '../styles/Theme';
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth, db } from "../config/firebase";
+import { HomeScreenStyles as styles } from "../styles/HomeScreen.styles";
+import { Theme } from "../styles/Theme";
 
 export default function HomeScreen({ navigation }) {
+  const [groups, setGroups] = useState([]);
   const [updates, setUpdates] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    initializeApp();
-    setupNotifications();
+    const unsubGroups = loadGroups();
+    return () => unsubGroups && unsubGroups();
   }, []);
 
-  const initializeApp = async () => {
-    await loadUpdates();
-    await loadFriends();
-    await startLocationTracking();
-    setLoading(false);
-  };
-
-  const loadUpdates = () => {
-    const q = query(collection(db, 'updates'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const updatesList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setUpdates(updatesList);
+  const loadGroups = () => {
+    const q = query(collection(db, "groups"), where("members", "array-contains", auth.currentUser.uid));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setGroups(list);
+      loadGroupUpdates(list);
+      setLoading(false);
     });
-    return unsubscribe;
+    return unsub;
   };
 
-  const loadFriends = async () => {
-    const mockFriends = [
-      { id: '1', name: 'Alex', status: 'Online', lastSeen: new Date() },
-      { id: '2', name: 'Sam', status: 'Away', lastSeen: new Date(Date.now() - 300000) },
-      { id: '3', name: 'Jordan', status: 'Online', lastSeen: new Date() },
-    ];
-    setFriends(mockFriends);
-  };
-
-  const setupNotifications = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('No notification permissions');
-    }
+  const loadGroupUpdates = (groupsList) => {
+    const ids = groupsList.map((g) => g.id);
+    if (ids.length === 0) return;
+    const q = query(collection(db, "updates"), where("groupId", "in", ids), orderBy("timestamp", "desc"));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setUpdates(list);
+    });
+    return unsub;
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadFriends();
+    setGroups([]);
+    setUpdates([]);
+    await loadGroups();
     setRefreshing(false);
   };
 
-  const sendClingyAlert = async () => {
-    try {
-      await addDoc(collection(db, 'notifications'), {
-        type: 'clingy_alert',
-        message: 'I miss you! 🥺',
-        fromUserId: auth.currentUser.uid,
-        fromUserName: auth.currentUser.displayName || 'Your friend',
-        timestamp: new Date(),
-        read: false
-      });
-
-      Alert.alert('Sent!', 'Your friends know you miss them! 💕');
-    } catch (error) {
-      console.error('Error sending clingy alert:', error);
-      Alert.alert('Error', 'Failed to send alert');
-    }
-  };
-
-  const sendQuickMessage = async (message) => {
-    try {
-      await addDoc(collection(db, 'updates'), {
-        userId: auth.currentUser.uid,
-        content: message,
-        type: 'text',
-        timestamp: new Date(),
-        user: auth.currentUser.displayName || 'Friend',
-        isQuickMessage: true
-      });
-    } catch (error) {
-      console.error('Error sending quick message:', error);
-    }
-  };
-
-  const quickMessages = [
-    { id: 1, text: "What are you doing? 🥺", emoji: "👀" },
-    { id: 2, text: "I miss you! 💔", emoji: "💕" },
-    { id: 3, text: "Send me a selfie! 📸", emoji: "🤳" },
-    { id: 4, text: "Where are you? 🗺️", emoji: "📍" },
-    { id: 5, text: "Thinking of you! 💭", emoji: "😊" },
-    { id: 6, text: "Are you busy? 🕐", emoji: "⏰" }
-  ];
-
-  const renderUpdateItem = ({ item }) => (
-    <View style={styles.updateItem}>
-      <View style={styles.updateHeader}>
-        <Text style={styles.userName}>{item.user}</Text>
-        <Text style={styles.timestamp}>
-          {new Date(item.timestamp?.toDate()).toLocaleTimeString()}
-        </Text>
-      </View>
-      
-      {item.type === 'image' ? (
-        <Image source={{ uri: item.content }} style={styles.updateImage} />
-      ) : (
-        <Text style={styles.updateText}>{item.content}</Text>
-      )}
-      
-      <View style={styles.updateActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text>❤️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text>😆</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text>🔥</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderFriendItem = ({ item }) => (
-    <TouchableOpacity style={styles.friendItem}>
-      <View style={styles.friendInfo}>
-        <View style={[
-          styles.statusIndicator, 
-          { 
-            backgroundColor: item.status === 'Online' 
-              ? Theme.colors.status.online 
-              : Theme.colors.status.away 
-          }
-        ]} />
-        <Text style={styles.friendName}>{item.name}</Text>
-      </View>
-      <Text style={styles.lastSeen}>
-        {item.status === 'Online' ? 'Now' : '5m ago'}
-      </Text>
-    </TouchableOpacity>
-  );
+  const name = auth.currentUser?.displayName;
+  const possessive = name ? (name.endsWith("s") ? `${name}'` : `${name}'s`) : "your";
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Theme.colors.primary} />
-        <Text style={styles.loadingText}>Getting things ready... 💕</Text>
+        <Text style={styles.loadingText}>warming up your cozy space ☕</Text>
       </View>
     );
   }
 
   return (
+      <View style={styles.screen}>
+  <LottieView
+      source={require("../assets/animations/geometry.json")}
+      autoPlay
+      loop
+      style={styles.backgroundAnimation}
+      resizeMode="cover"
+    />
     <View style={styles.container}>
-      {/* Header */}
+      {/* header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Clingy Friend 💕</Text>
-        <TouchableOpacity 
-          style={styles.friendsButton}
-          onPress={() => navigation.navigate('Friends')}
-        >
-          <Text>👥</Text>
+        <Text style={styles.greeting}>
+          {possessive} <Text style={styles.greetingHighlight}>audiences</Text>
+        </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <Image
+            source={require("../assets/images/blob.png")}
+            style={styles.memberAvatar}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
 
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity 
-          style={styles.mainAction}
-          onPress={() => navigation.navigate('Camera')}
-        >
-          <Text style={styles.mainActionText}>📸 Send Update</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.clingyAction}
-          onPress={sendClingyAlert}
-        >
-          <Text style={styles.clingyActionText}>I Miss You! 🥺</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Quick Messages */}
-      <View style={styles.quickMessagesSection}>
-        <Text style={styles.sectionTitle}>Quick Messages</Text>
+      {/* groups section */}
+      <Text style={styles.sectionTitle}>groups</Text>
+      {groups.length === 0 ? (
+        <View style={styles.emptyGroupContainer}>
+          <Image
+            source={require("../assets/images/emptyblob.png")}
+            style={styles.emptyGroupImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.emptyGroupTitle}>no blobs yet</Text>
+          <TouchableOpacity
+            style={styles.createGroupButton}
+            onPress={() => navigation.navigate("AddGroup")}
+          >
+            <Text style={styles.createGroupText}>create group</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
         <FlatList
           horizontal
-          data={quickMessages}
-          keyExtractor={(item) => item.id.toString()}
+          data={groups}
+          keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.groupList}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.quickMessageButton}
-              onPress={() => sendQuickMessage(item.text)}
+            <TouchableOpacity
+              style={styles.groupCard}
+              onPress={() => navigation.navigate("GroupDetails", { groupId: item.id })}
             >
-              <Text style={styles.quickMessageEmoji}>{item.emoji}</Text>
-              <Text style={styles.quickMessageText}>
-                {item.text.split(' ')[0]}...
-              </Text>
+              <Text style={styles.groupName}>{item.name}</Text>
+              <View style={styles.memberRow}>
+                {item.members?.slice(0, 3).map((_, idx) => (
+                  <Image
+                    key={idx}
+                    source={require("../assets/images/blob.png")}
+                    style={[styles.memberAvatar, { marginLeft: idx === 0 ? 0 : -8 }]}
+                  />
+                ))}
+                {item.members.length > 3 && (
+                  <Text style={styles.memberCount}>+{item.members.length - 3}</Text>
+                )}
+              </View>
             </TouchableOpacity>
           )}
         />
-      </View>
+      )}
 
-      {/* Friends List */}
-      <View style={styles.friendsSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Friends</Text>
-          <Text style={styles.seeAllText}>See All</Text>
+      {/* feed */}
+      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>recent moments</Text>
+      {updates.length === 0 ? (
+        <View style={styles.emptyMoments}>
+          <Text style={styles.emptyMomentsTitle}>no moments yet 💤</Text>
+          <Text style={styles.emptyMomentsSubtitle}>share something clingy 💞</Text>
         </View>
-        <FlatList
-          horizontal
-          data={friends}
-          keyExtractor={(item) => item.id}
-          showsHorizontalScrollIndicator={false}
-          renderItem={renderFriendItem}
-        />
-      </View>
-
-      {/* Updates Feed */}
-      <View style={styles.updatesSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Updates</Text>
-          <Text style={styles.updateCount}>{updates.length} updates</Text>
-        </View>
+      ) : (
         <FlatList
           data={updates}
           keyExtractor={(item) => item.id}
-          renderItem={renderUpdateItem}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
               colors={[Theme.colors.primary]}
+              tintColor={Theme.colors.primary}
             />
           }
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No updates yet! 📸</Text>
-              <Text style={styles.emptyStateSubtext}>
-                Send your first update to get started!
-              </Text>
+          renderItem={({ item }) => (
+            <View style={styles.updateCard}>
+              <Text style={styles.userName}>{item.user}</Text>
+              <Text style={styles.updateText}>{item.content}</Text>
             </View>
-          }
+          )}
         />
-      </View>
+      )}
     </View>
+      </View>
+
   );
 }

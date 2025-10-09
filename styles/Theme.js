@@ -1,20 +1,20 @@
 export const Theme = {
   colors: {
-    primary: '#E9AFA3',       // blush pink
-    secondary: '#A9C9C2',     // muted sage teal
-    accent: '#F2D0A4',        // warm honey beige
-    background: '#f5e8d0',    // cozy cream
+    primary: '#E8B4A2',       
+    secondary: '#C4D7B2',    
+    accent: '#EADBC8',       
+    background: '#f5e8d0',    
     surface: '#FFFFFF',
     text: {
-      primary: '#c89f9c',
-      secondary: '#b48a86',
-      light: '#B7A7A7',
-      inverse: '#fffaf3',
+      primary: '#2E2E2E',
+      secondary: '#6E6E6E',
+      light: '#A9A9A9',
+      inverse: '#FFFFFF',
     },
     status: {
-      online: '#A3C9A8',      // pastel mint green
-      away: '#F6C28B',        // soft amber
-      offline: '#C7C7C7',
+      online: '#A8C686',      
+      away: '#E7C97F',        
+      offline: '#C8C8C8',
     },
   },
 
@@ -27,13 +27,8 @@ export const Theme = {
     xxl: 40,
   },
 
-  borderRadius: {
-    sm: 6,
-    md: 10,
-    lg: 16,
-    xl: 20,
-    round: 50,
-  },
+  borderRadius: { sm: 8, md: 12, lg: 16, xl: 20, round: 50 },
+
 
 typography: {
   h1: { fontSize: 26, fontFamily: 'PoppinsBold' },
@@ -46,16 +41,16 @@ typography: {
 
   shadows: {
     sm: {
-      shadowColor: '#E4D0CA',
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 3,
-      elevation: 2,
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
     },
     md: {
-      shadowColor: '#E4D0CA',
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.05,
       shadowRadius: 6,
       elevation: 4,
     },
