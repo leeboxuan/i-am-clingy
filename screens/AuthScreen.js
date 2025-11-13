@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import LottieView from "lottie-react-native";
 import React, { useRef, useState } from "react";
 import {
@@ -16,8 +17,9 @@ import {
   View,
 } from "react-native";
 
-import { auth } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import { AuthScreenStyles as styles } from "../styles/AuthScreen.styles";
+import { generateUniqueFriendCode } from "../utils/friendCodeGenerator";
 
 export default function AuthScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -30,36 +32,51 @@ export default function AuthScreen({ navigation }) {
   const animationRef = useRef(null);
 
   const handleAuth = async () => {
+    setError("");
     try {
       if (isLogin) {
-        const { user } = await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
+        // --- LOGIN FLOW ---
+        const { user } = await signInWithEmailAndPassword(auth, email, password);
+
         if (!user.emailVerified) {
           navigation.replace("VerifyEmail", { email: user.email });
           return;
         }
+
         navigation.replace("Home");
       } else {
+        // --- SIGNUP FLOW ---
         if (password !== confirmPassword) {
           setError("Passwords do not match 😭");
           return;
         }
 
-        const { user } = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        await updateProfile(user, { displayName });
-        await sendEmailVerification(user);
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
 
+        // set display name on Firebase Auth profile
+        await updateProfile(user, { displayName });
+
+        // generate funny + unique friend code
+        const friendCode = await generateUniqueFriendCode();
+
+        // create Firestore user doc
+        await setDoc(doc(db, "users", user.uid), {
+          displayName,
+          email,
+          friendCode,
+          photoURL: null,
+          friends: [],
+          createdAt: new Date().toISOString(),
+        });
+
+        // send verification
+        await sendEmailVerification(user);
         navigation.replace("VerifyEmail", { email: user.email });
       }
     } catch (err) {
-      setError("Oops! " + err.message.replace("Firebase: ", ""));
+      console.error("Auth error:", err);
+      const message = err.message?.replace("Firebase: ", "") || "Unknown error";
+      setError("Oops! " + message);
     }
   };
 
@@ -75,7 +92,7 @@ export default function AuthScreen({ navigation }) {
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* background animation (droplets) */}
+      {/* background animation */}
       <LottieView
         ref={animationRef}
         source={require("../assets/animations/abstract.json")}
@@ -93,11 +110,12 @@ export default function AuthScreen({ navigation }) {
         />
       </View>
 
-      {/* main card */}
+      {/* main auth card */}
       <View style={styles.authCard}>
         <Text style={styles.title}>
           {isLogin ? "home is where you tap login" : "join the clingdom"}
         </Text>
+
         {!isLogin && (
           <TextInput
             style={styles.input}
@@ -107,6 +125,7 @@ export default function AuthScreen({ navigation }) {
             onChangeText={setDisplayName}
           />
         )}
+
         {/* Email */}
         <TextInput
           style={styles.input}
@@ -127,7 +146,7 @@ export default function AuthScreen({ navigation }) {
           secureTextEntry
         />
 
-        {/* Confirm Password for Sign Up */}
+        {/* Confirm Password */}
         {!isLogin && (
           <TextInput
             style={styles.input}
@@ -147,7 +166,7 @@ export default function AuthScreen({ navigation }) {
           <Text style={styles.buttonText}>{isLogin ? "Login" : "Sign Up"}</Text>
         </TouchableOpacity>
 
-        {/* Switch between Login / Sign Up */}
+        {/* Switch login/signup */}
         <TouchableOpacity onPress={handleSwitch}>
           <Text style={styles.switchText}>
             {isLogin ? (

@@ -1,58 +1,69 @@
-import { StyleSheet } from 'react-native';
-import { GlobalStyles } from './Global.styles';
-import { Theme } from './Theme';
+// styles/ProfileScreen.styles.js
+import { StyleSheet } from "react-native";
+import { Theme } from "./Theme";
 
 export const ProfileScreenStyles = StyleSheet.create({
   container: {
-    ...GlobalStyles.screenContainer,
-    backgroundColor: Theme.colors.background,
-  },
-  header: {
-    ...GlobalStyles.header,
-    backgroundColor: Theme.colors.background,
-  },
-  title: {
-    ...GlobalStyles.headerTitle,
-    color: Theme.colors.text.primary,
-  },
-  backButtonText: {
-    color: Theme.colors.primary,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    padding: Theme.spacing.xl,
-    backgroundColor: Theme.colors.surface,
-    marginHorizontal: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.lg,
-    marginBottom: Theme.spacing.lg,
-    ...Theme.shadows.sm,
+    flex: 1,
+    backgroundColor: "#1E1A17",
+    padding: Theme.spacing.lg,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Theme.colors.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: "center",
+    marginTop: Theme.spacing.xl,
+    marginBottom: Theme.spacing.md,
   },
-  userName: {
-    ...Theme.typography.h1,
-    color: Theme.colors.text.primary,
+  changePhotoText: {
+    color: "#C9BFB2",
+    textAlign: "center",
+    fontFamily: "Poppins",
   },
-  userBio: {
-    ...Theme.typography.body,
-    color: Theme.colors.text.secondary,
+  label: {
+    color: "#F3EEE8",
+    marginTop: Theme.spacing.lg,
+    fontFamily: "PoppinsBold",
   },
-  logoutButton: {
-    backgroundColor: Theme.colors.primary,
-    padding: Theme.spacing.md,
+  input: {
+    backgroundColor: "#2A2521",
+    color: "#F3EEE8",
+    padding: 10,
+    borderRadius: Theme.borderRadius.md,
+    marginTop: 4,
+  },
+  button: {
+    backgroundColor: "#A4896E",
     borderRadius: Theme.borderRadius.lg,
-    alignItems: 'center',
-    marginHorizontal: Theme.spacing.md,
-    ...Theme.shadows.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignSelf: "flex-start",
+    marginTop: Theme.spacing.sm,
   },
-  logoutText: {
-    color: Theme.colors.text.inverse,
-    fontWeight: 'bold',
+  buttonText: {
+    color: "#1E1A17",
+    fontFamily: "PoppinsBold",
+  },
+  friendCode: {
+    backgroundColor: "#2A2521",
+    color: "#C9BFB2",
+    padding: 8,
+    borderRadius: Theme.borderRadius.md,
+    marginTop: 4,
+    fontFamily: "Nunito",
+  },
+  addFriendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 8,
+  },
+  friendItem: {
+    color: "#C9BFB2",
+    backgroundColor: "#2A2521",
+    padding: 10,
+    borderRadius: Theme.borderRadius.md,
+    marginTop: 6,
   },
 });

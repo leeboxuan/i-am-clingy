@@ -4,9 +4,10 @@ import { Theme } from "./Theme";
 export const HomeScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1E1A17", // deep clay black
+    backgroundColor: "transparent", // ⬅️ this lets the animation show
     paddingHorizontal: Theme.spacing.lg,
     paddingTop: Theme.spacing.xl,
+    zIndex: 1,
   },
 
   // HEADER
@@ -15,8 +16,7 @@ export const HomeScreenStyles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Theme.spacing.lg,
-        marginTop: Theme.spacing.xxl,
-
+    marginTop: Theme.spacing.xxl,
   },
   greeting: {
     fontFamily: "PoppinsBold",
@@ -74,16 +74,18 @@ export const HomeScreenStyles = StyleSheet.create({
     color: "#9C9185",
     marginLeft: 6,
   },
-  screen: {
+screen: {
   flex: 1,
-  backgroundColor: "#1E1A17", // fallback for dark mode
+  backgroundColor: "#1E1A17", // keep base color for safe fallback
+  position: "relative",       // allow layering
+  overflow: "hidden",         // ensure animation doesn’t bleed outside
 },
 
-backgroundAnimation: {
-  ...StyleSheet.absoluteFillObject,
-  zIndex: 2,
-  opacity: 0.1, // subtle motion
-},
+  backgroundAnimation: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -1,
+    opacity: 0.1, // subtle motion
+  },
 
   // EMPTY GROUP STATE
   emptyGroupContainer: {

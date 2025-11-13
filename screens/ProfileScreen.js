@@ -1,219 +1,124 @@
 // screens/ProfileScreen.js
-import { useState } from 'react';
-import {
-    Alert,
-    ScrollView,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { ProfileScreenStyles as styles } from '../styles/ProfileScreen.styles';
-import { Theme } from '../styles/Theme';
+import * as ImagePicker from "expo-image-picker";
+import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { auth, db, storage } from "../config/firebase";
+import { ProfileScreenStyles as styles } from "../styles/ProfileScreen.styles";
 
-export default function ProfileScreen({ navigation }) {
-  const [settings, setSettings] = useState({
-    notifications: true,
-    locationSharing: true,
-    showOnlineStatus: true,
-    clingyMode: true,
-  });
+export default function ProfileScreen() {
+  const user = auth.currentUser;
+  const [displayName, setDisplayName] = useState(user.displayName || "");
+  const [photoURL, setPhotoURL] = useState(user.photoURL || null);
+  const [friends, setFriends] = useState([]);
+  const [friendCodeInput, setFriendCodeInput] = useState("");
 
-  const toggleSetting = (setting) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setFriends(data.friends || []);
+        if (data.photoURL) setPhotoURL(data.photoURL);
+      } else {
+        await setDoc(doc(db, "users", user.uid), { friends: [] });
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSaveDisplayName = async () => {
+    await updateDoc(doc(db, "users", user.uid), { displayName });
+    await user.updateProfile({ displayName });
+    Alert.alert("Updated!", "Your display name has been changed.");
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Log Out', style: 'destructive', onPress: () => navigation.navigate('Login') }
-      ]
-    );
+  const handleAddFriend = async () => {
+    if (!friendCodeInput.trim()) return;
+    const friendRef = doc(db, "users", friendCodeInput.trim());
+    const friendSnap = await getDoc(friendRef);
+    if (!friendSnap.exists()) {
+      Alert.alert("Error", "No user found with that friend code.");
+      return;
+    }
+
+    await updateDoc(doc(db, "users", user.uid), {
+      friends: arrayUnion(friendCodeInput.trim()),
+    });
+    await updateDoc(friendRef, {
+      friends: arrayUnion(user.uid),
+    });
+
+    setFriends((prev) => [...prev, friendCodeInput.trim()]);
+    setFriendCodeInput("");
+    Alert.alert("Success!", "Friend added!");
   };
 
-  const SettingItem = ({ 
-    icon, 
-    title, 
-    description, 
-    type = 'toggle', 
-    value, 
-    onPress,
-    isFirst = false,
-    isLast = false 
-  }) => (
-    <TouchableOpacity 
-      style={[
-        styles.settingItem,
-        isFirst && styles.settingFirstItem,
-        isLast && styles.settingLastItem
-      ]}
-      onPress={onPress}
-      disabled={type === 'toggle'}
-    >
-      <View style={styles.settingInfo}>
-        <View style={styles.settingIcon}>
-          <Text>{icon}</Text>
-        </View>
-        <View style={styles.settingText}>
-          <Text style={styles.settingTitle}>{title}</Text>
-          {description && (
-            <Text style={styles.settingDescription}>{description}</Text>
-          )}
-        </View>
-      </View>
-      {type === 'toggle' ? (
-        <Switch
-          value={value}
-          onValueChange={onPress}
-          trackColor={{ false: '#767577', true: Theme.colors.primary }}
-          thumbColor={value ? '#FFF' : '#f4f3f4'}
-        />
-      ) : (
-        <Text style={styles.settingValue}>›</Text>
-      )}
-    </TouchableOpacity>
-  );
+  const pickProfilePic = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `profilePics/${user.uid}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      await updateDoc(doc(db, "users", user.uid), { photoURL: downloadURL });
+      await user.updateProfile({ photoURL: downloadURL });
+      setPhotoURL(downloadURL);
+      Alert.alert("Updated!", "Profile picture changed!");
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
+      <TouchableOpacity onPress={pickProfilePic}>
+        <Image
+          source={photoURL ? { uri: photoURL } : require("../assets/images/blob.png")}
+          style={styles.avatar}
+        />
+        <Text style={styles.changePhotoText}>Change photo</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.label}>Display Name</Text>
+      <TextInput
+        style={styles.input}
+        value={displayName}
+        onChangeText={setDisplayName}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleSaveDisplayName}>
+        <Text style={styles.buttonText}>Save Name</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.label}>Your Friend Code</Text>
+      <Text selectable style={styles.friendCode}>{user.uid}</Text>
+
+      <Text style={styles.label}>Add Friend</Text>
+      <View style={styles.addFriendRow}>
+        <TextInput
+          style={[styles.input, { flex: 1 }]}
+          placeholder="Enter friend code"
+          value={friendCodeInput}
+          onChangeText={setFriendCodeInput}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleAddFriend}>
+          <Text style={styles.buttonText}>Add</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Profile</Text>
-        <View style={styles.headerPlaceholder} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>👤</Text>
-            </View>
-            <TouchableOpacity style={styles.editAvatarButton}>
-              <Text style={{ color: '#FFF' }}>✏️</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.userName}>Your Name</Text>
-          <Text style={styles.userBio}>Professional clinger 💕 Always missing you 🥺</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>42</Text>
-              <Text style={styles.statLabel}>Friends</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>128</Text>
-              <Text style={styles.statLabel}>Updates</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>7</Text>
-              <Text style={styles.statLabel}>Streak</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Privacy Settings */}
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Privacy & Sharing</Text>
-          <SettingItem
-            icon="📍"
-            title="Location Sharing"
-            description="Let friends see your location"
-            type="toggle"
-            value={settings.locationSharing}
-            onPress={() => toggleSetting('locationSharing')}
-            isFirst={true}
-          />
-          <SettingItem
-            icon="🟢"
-            title="Online Status"
-            description="Show when you're online"
-            type="toggle"
-            value={settings.showOnlineStatus}
-            onPress={() => toggleSetting('showOnlineStatus')}
-          />
-          <SettingItem
-            icon="💕"
-            title="Clingy Mode"
-            description="Extra clingy notifications"
-            type="toggle"
-            value={settings.clingyMode}
-            onPress={() => toggleSetting('clingyMode')}
-            isLast={true}
-          />
-        </View>
-
-        {/* Notifications */}
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <SettingItem
-            icon="🔔"
-            title="Push Notifications"
-            description="Receive app notifications"
-            type="toggle"
-            value={settings.notifications}
-            onPress={() => toggleSetting('notifications')}
-            isFirst={true}
-          />
-          <SettingItem
-            icon="💬"
-            title="Message Sounds"
-            description="Play sounds for new messages"
-            type="toggle"
-            value={true}
-            onPress={() => {}}
-            isLast={true}
-          />
-        </View>
-
-        {/* Account Settings */}
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <SettingItem
-            icon="✏️"
-            title="Edit Profile"
-            type="navigation"
-            onPress={() => Alert.alert('Coming soon!')}
-            isFirst={true}
-          />
-          <SettingItem
-            icon="🛡️"
-            title="Privacy & Security"
-            type="navigation"
-            onPress={() => Alert.alert('Coming soon!')}
-          />
-          <SettingItem
-            icon="💬"
-            title="Support"
-            type="navigation"
-            onPress={() => Alert.alert('Coming soon!')}
-          />
-          <SettingItem
-            icon="ℹ️"
-            title="About"
-            type="navigation"
-            onPress={() => Alert.alert('Coming soon!')}
-            isLast={true}
-          />
-        </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text>🚪</Text>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <Text style={styles.label}>Friends</Text>
+      <FlatList
+        data={friends}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => (
+          <Text style={styles.friendItem}>{item}</Text>
+        )}
+      />
     </View>
   );
 }
